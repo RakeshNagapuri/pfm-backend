@@ -9,6 +9,7 @@ import com.pfm.backend.dto.LoginRequestDto;
 import com.pfm.backend.dto.RegisterRequestDto;
 import com.pfm.backend.model.User;
 import com.pfm.backend.repository.UserRepository;
+import com.pfm.backend.security.JwtUtil;
 import com.pfm.backend.util.ResponseUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class AuthService {
 	
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
-    
+    private final JwtUtil jwtUtil;
 
     public static String EMAIL_ALREADY_EXISTS = "Email already exists";
     public static String USER_REGISTERED_SUCCESSFULLY = "User registered successfully";
@@ -58,7 +59,9 @@ public class AuthService {
 			return ResponseUtil.build(HttpStatus.UNAUTHORIZED, INVALID_EMAIL_PASSWORD);
 		}
 		
-		return ResponseUtil.build(HttpStatus.OK, LOGIN_SUCCESSFUL);
+		String token = jwtUtil.generateToken(user.getEmail());
+		
+		return ResponseUtil.build(HttpStatus.OK, LOGIN_SUCCESSFUL,token);
 	}
 
 }
