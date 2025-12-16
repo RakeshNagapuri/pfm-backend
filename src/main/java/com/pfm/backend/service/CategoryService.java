@@ -62,5 +62,27 @@ public class CategoryService {
                 categories
         );
     }
+
+	public ResponseEntity<?> updateCategory(Long id, CategoryRequestDto aRequestDto, String email) {
+		User user = userRepo.findByEmail(email).orElseThrow();
+
+		if (user == null) {
+			return ResponseUtil.build(HttpStatus.UNAUTHORIZED, "User not found");
+		}
+
+		Category category = categoryRepo.findByIdAndUser(id, user).orElse(null);
+
+		if (category == null) {
+			return ResponseUtil.build(HttpStatus.NOT_FOUND, "Category not found");
+		}
+		
+		category.setName(aRequestDto.getName());
+		category.setType(aRequestDto.getType());
+		
+		categoryRepo.save(category);
+		
+		return ResponseUtil.build( HttpStatus.OK,
+	            "Category updated successfully");
+	}
 	
 }
