@@ -2,6 +2,7 @@ package com.pfm.backend.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,5 +38,10 @@ public class CategoryController {
 	public ResponseEntity<?>updateCategory(@PathVariable Long id,@RequestBody CategoryRequestDto aRequestDto,Authentication aAuthentication){
 		String email = aAuthentication.getName();
 		return service.updateCategory(id,aRequestDto,email);
+	}
+	@DeleteMapping("/{id}")
+	public ResponseEntity<?>deleteCategory(@PathVariable Long id,Authentication aAuthentication){
+		String email = aAuthentication.getName();
+		return service.deleteCategory(id,email);
 	}
 }

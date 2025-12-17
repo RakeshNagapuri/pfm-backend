@@ -84,5 +84,22 @@ public class CategoryService {
 		return ResponseUtil.build( HttpStatus.OK,
 	            "Category updated successfully");
 	}
+
+	public ResponseEntity<?> deleteCategory(Long id,String email) {
+		User user = userRepo.findByEmail(email).orElseThrow();
+
+		if (user == null) {
+			return ResponseUtil.build(HttpStatus.UNAUTHORIZED, "User not found");
+		}
+
+		Category category = categoryRepo.findByIdAndUser(id, user).orElse(null);
+
+		if (category == null) {
+			return ResponseUtil.build(HttpStatus.NOT_FOUND, "Category not found");
+		}
+		
+		categoryRepo.delete(category);
+		return ResponseUtil.build(HttpStatus.OK, "Category deleted successfully");
+	}
 	
 }
