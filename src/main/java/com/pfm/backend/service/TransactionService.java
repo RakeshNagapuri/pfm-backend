@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import com.pfm.backend.dto.TransactionRequestDto;
 import com.pfm.backend.dto.common.PagedResponse;
+import com.pfm.backend.dto.response.CategoryResponseDto;
+import com.pfm.backend.dto.response.TransactionResponseDto;
 import com.pfm.backend.model.Category;
 import com.pfm.backend.model.Transaction;
 import com.pfm.backend.model.User;
@@ -83,7 +85,7 @@ public class TransactionService {
 		}else {
 			pageResult = transactionRepository.findByUser(user,pageable);
 		}		
-		PagedResponse<Transaction> response = toPagedResponse(pageResult);
+		PagedResponse<TransactionResponseDto> response = toPagedResponse(pageResult);
 		return ResponseUtil.build(
 	            HttpStatus.OK,
 	            "Transactions fetched successfully",
@@ -92,17 +94,34 @@ public class TransactionService {
 
 	}
 
-	private PagedResponse<Transaction> toPagedResponse(Page<Transaction> aPageResult) {
+	private PagedResponse<TransactionResponseDto> toPagedResponse(Page<Transaction> aPageResult) {
 		return new PagedResponse<>(
-		        aPageResult.getContent(),
-		        aPageResult.getNumber(),
-		        aPageResult.getSize(),
-		        aPageResult.getTotalElements(),
-		        aPageResult.getTotalPages(),
-		        aPageResult.isLast()
+				aPageResult.getContent()
+                .stream()
+                .map(this::mapToDto)
+                .toList(),
+                aPageResult.getNumber(),
+                aPageResult.getSize(),
+                aPageResult.getTotalElements(),
+                aPageResult.getTotalPages(),
+                aPageResult.isLast()
 		);
 	}
 
+	private TransactionResponseDto mapToDto(Transaction transaction) {
+	    return new TransactionResponseDto(
+	            transaction.getId(),
+	            transaction.getAmount(),
+	            transaction.getType(),
+	            transaction.getTransactionDate(),
+	            transaction.getDescription(),
+	            new CategoryResponseDto(
+	                    transaction.getCategory().getId(),
+	                    transaction.getCategory().getName(),
+	                    transaction.getCategory().getType()
+	            )
+	    );
+	}
 	public ResponseEntity<?> updateTransaction(Long aId, TransactionRequestDto aRequestDto, String aEmail) {
 		User user = userRepository.findByEmail(aEmail).orElse(null);
 		if(user==null) {
