@@ -1,10 +1,17 @@
 package com.pfm.backend.service;
 
+import java.time.LocalDate;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.pfm.backend.dto.TransactionRequestDto;
+import com.pfm.backend.dto.common.PagedResponse;
 import com.pfm.backend.model.Category;
 import com.pfm.backend.model.Transaction;
 import com.pfm.backend.model.User;
@@ -55,7 +62,9 @@ public class TransactionService {
         return ResponseUtil.build(HttpStatus.CREATED, "Transaction created successfully");
 	}
 
-	public ResponseEntity<?> getTransactions(String aEmail) {
+	
+	public ResponseEntity<?> getTransactions(String aEmail, LocalDate aFromDate, LocalDate aToDate, String aType,
+			int aPage, int aSize, String aSortBy, String aSortDir) {
 		User user = userRepository.findByEmail(aEmail).orElse(null);
 		if(user==null) {
 			return ResponseUtil.build(
@@ -64,7 +73,34 @@ public class TransactionService {
             );
 		}
 		
-		return ResponseUtil.build(HttpStatus.OK,"Transactions fetched successfully" ,transactionRepository.findByUser(user));
+		Sort sort = "DESC".equalsIgnoreCase(aSortDir)?Sort.by(aSortBy).descending():Sort.by(aSortBy).ascending();
+		
+		Pageable pageable = PageRequest.of(aPage, aSize,sort);
+		Page<Transaction> pageResult;
+		if(aFromDate!=null && aToDate!=null && aType!=null) {
+			pageResult = transactionRepository.findByUserAndTransactionDateBetweenAndType(user, aFromDate, aToDate,
+					aType, pageable);
+		}else {
+			pageResult = transactionRepository.findByUser(user,pageable);
+		}		
+		PagedResponse<Transaction> response = toPagedResponse(pageResult);
+		return ResponseUtil.build(
+	            HttpStatus.OK,
+	            "Transactions fetched successfully",
+	            response
+	    );
+
+	}
+
+	private PagedResponse<Transaction> toPagedResponse(Page<Transaction> aPageResult) {
+		return new PagedResponse<>(
+		        aPageResult.getContent(),
+		        aPageResult.getNumber(),
+		        aPageResult.getSize(),
+		        aPageResult.getTotalElements(),
+		        aPageResult.getTotalPages(),
+		        aPageResult.isLast()
+		);
 	}
 
 	public ResponseEntity<?> updateTransaction(Long aId, TransactionRequestDto aRequestDto, String aEmail) {
