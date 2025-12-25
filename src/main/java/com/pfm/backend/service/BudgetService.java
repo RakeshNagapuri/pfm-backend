@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.pfm.backend.dto.BudgetRequestDto;
+import com.pfm.backend.dto.BudgetUpdateRequestDto;
 import com.pfm.backend.dto.response.BudgetResponseDto;
 import com.pfm.backend.dto.response.CategoryResponseDto;
 import com.pfm.backend.model.Budget;
@@ -111,7 +112,42 @@ public class BudgetService {
 	            "Budgets fetched successfully",
 	            response
 	    );
+	}
+	
+	public ResponseEntity<?> updateBudget(Long aBudgetId,BudgetUpdateRequestDto aDto,String aEmail){
+		User user = userRepository.findByEmail(aEmail).orElse(null);
+	    if (user == null) {
+	        return ResponseUtil.build(
+	                HttpStatus.UNAUTHORIZED,
+	                "User not found"
+	        );
+	    }
+	    Budget budget = budgetRepository.findById(aBudgetId).orElse(null);
+	    if (budget == null || !budget.getUser().getId().equals(user.getId())) {
+	        return ResponseUtil.build(
+	                HttpStatus.NOT_FOUND,
+	                "Budget not found"
+	        );
+	    }
 	    
+	    budget.setAmount(aDto.getAmount());;
+	    budgetRepository.save(budget);
 	    
+	    BudgetResponseDto response = new BudgetResponseDto(
+	            budget.getId(),
+	            budget.getMonth().toString(),
+	            budget.getAmount(),
+	            budget.getCategory() == null ? null :
+	                    new CategoryResponseDto(
+	                            budget.getCategory().getId(),
+	                            budget.getCategory().getName(),
+	                            budget.getCategory().getType()
+	                    )
+	    );
+	    return ResponseUtil.build(
+	            HttpStatus.OK,
+	            "Budget updated successfully",
+	            response
+	    );
 	}
 }

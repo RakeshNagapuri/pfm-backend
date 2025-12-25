@@ -3,13 +3,16 @@ package com.pfm.backend.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pfm.backend.dto.BudgetRequestDto;
+import com.pfm.backend.dto.BudgetUpdateRequestDto;
 import com.pfm.backend.service.BudgetService;
 
 import lombok.RequiredArgsConstructor;
@@ -30,5 +33,11 @@ public class BudgetController {
 	public ResponseEntity<?>getBudget(@RequestParam(required=false)String aMonth,Authentication aAuthentication){
 		String email = aAuthentication.getName();
 		return budgetService.getBudgets(email, aMonth);
+	}
+	
+	@PutMapping("/{id}")
+	public ResponseEntity<?>updateBudget(@PathVariable Long id,@RequestBody BudgetUpdateRequestDto aDto,Authentication aAuthentication){
+		String email = aAuthentication.getName();
+		return budgetService.updateBudget(id,aDto,email);
 	}
 }
