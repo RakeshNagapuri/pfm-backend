@@ -30,14 +30,20 @@ public class BudgetController {
 	}
 	
 	@GetMapping
-	public ResponseEntity<?>getBudget(@RequestParam(required=false)String aMonth,Authentication aAuthentication){
+	public ResponseEntity<?>getBudget(@RequestParam(required=false)String month,Authentication aAuthentication){
 		String email = aAuthentication.getName();
-		return budgetService.getBudgets(email, aMonth);
+		return budgetService.getBudgets(email, month);
 	}
 	
 	@PutMapping("/{id}")
 	public ResponseEntity<?>updateBudget(@PathVariable Long id,@RequestBody BudgetUpdateRequestDto aDto,Authentication aAuthentication){
 		String email = aAuthentication.getName();
 		return budgetService.updateBudget(id,aDto,email);
+	}
+	
+	@GetMapping("/summary")
+	public ResponseEntity<?>getBudgetSummary(@RequestParam String month,Authentication aAuthentication){
+		String email = aAuthentication.getName();
+		return budgetService.getBudgetSummary(email, month);
 	}
 }

@@ -1,5 +1,7 @@
 package com.pfm.backend.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -8,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.pfm.backend.dto.BudgetRequestDto;
+import com.pfm.backend.dto.BudgetSummaryResponseDto;
 import com.pfm.backend.dto.BudgetUpdateRequestDto;
 import com.pfm.backend.dto.response.BudgetResponseDto;
 import com.pfm.backend.dto.response.CategoryResponseDto;
@@ -16,6 +19,7 @@ import com.pfm.backend.model.Category;
 import com.pfm.backend.model.User;
 import com.pfm.backend.repository.BudgetRepository;
 import com.pfm.backend.repository.CategoryRepository;
+import com.pfm.backend.repository.TransactionRepository;
 import com.pfm.backend.repository.UserRepository;
 import com.pfm.backend.util.ResponseUtil;
 
@@ -27,6 +31,7 @@ public class BudgetService {
 	private final BudgetRepository budgetRepository;
 	private final CategoryRepository categoryRepository;
 	private final UserRepository userRepository;
+	private final TransactionRepository transactionRepository;
 	
 	public ResponseEntity<?>createBudget(BudgetRequestDto aBudgetRequestDto,String aEmail){
 		User user = userRepository.findByEmail(aEmail).orElse(null);
@@ -149,5 +154,35 @@ public class BudgetService {
 	            "Budget updated successfully",
 	            response
 	    );
+	}
+	
+	public ResponseEntity<?>getBudgetSummary(String aEmail,String aMonthStr){
+		User user = userRepository.findByEmail(aEmail).orElse(null);
+	    if (user == null) {
+	        return ResponseUtil.build(
+	                HttpStatus.UNAUTHORIZED,
+	                "User not found"
+	        );
+	    }
+	    YearMonth month = YearMonth.parse(aMonthStr);
+	    LocalDate start = month.atDay(1);
+	    LocalDate end = month.atEndOfMonth();
+	    
+	    Budget budget = budgetRepository.findByUserAndMonthAndCategory(user, month, null).orElse(null);
+	    if(budget==null) {
+	    	return ResponseUtil.build(HttpStatus.NOT_FOUND,
+	    			"No overall budget found for this month");
+	    }
+	    BigDecimal spent = transactionRepository.sumExpenseForPeriod(user, start, end);
+	    BigDecimal remaining = budget.getAmount().subtract(spent);
+	    BudgetSummaryResponseDto response =
+	            new BudgetSummaryResponseDto(
+	                    month.toString(),
+	                    budget.getAmount(),
+	                    spent,
+	                    remaining,
+	                    remaining.compareTo(BigDecimal.ZERO) < 0
+	            );
+	    return ResponseUtil.build(HttpStatus.OK, "Budget summary fetched successfully",response);	    
 	}
 }

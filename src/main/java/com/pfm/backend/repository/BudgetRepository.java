@@ -13,7 +13,9 @@ import com.pfm.backend.model.User;
 public interface BudgetRepository extends JpaRepository<Budget, Long>{
 	Optional<Budget>findByUserAndMonthAndCategory(User aUser,YearMonth aMonth,Category aCategory);
 
-	List<Budget> findByUserAndMonth(User user, YearMonth month);
+	List<Budget> findByUserAndMonth(User aUser, YearMonth aMonth);
 
-	List<Budget> findByUser(User user);
+	List<Budget> findByUser(User aUser);
+	
+	
 }
