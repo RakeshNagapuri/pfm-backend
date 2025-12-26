@@ -3,16 +3,19 @@ package com.pfm.backend.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.pfm.backend.dto.BudgetRequestDto;
-import com.pfm.backend.dto.BudgetSummaryResponseDto;
 import com.pfm.backend.dto.BudgetUpdateRequestDto;
 import com.pfm.backend.dto.response.BudgetResponseDto;
+import com.pfm.backend.dto.response.BudgetSummaryResponseDto;
+import com.pfm.backend.dto.response.CategoryBudgetSummaryResponseDto;
 import com.pfm.backend.dto.response.CategoryResponseDto;
 import com.pfm.backend.model.Budget;
 import com.pfm.backend.model.Category;
@@ -184,5 +187,42 @@ public class BudgetService {
 	                    remaining.compareTo(BigDecimal.ZERO) < 0
 	            );
 	    return ResponseUtil.build(HttpStatus.OK, "Budget summary fetched successfully",response);	    
+	}
+	
+	public ResponseEntity<?>getCategoryBudgetSummary(String aEmail,String aMonthStr){
+		User user = userRepository.findByEmail(aEmail).orElse(null);
+	    if (user == null) {
+	        return ResponseUtil.build(
+	                HttpStatus.UNAUTHORIZED,
+	                "User not found"
+	        );
+	    }
+	    
+	    YearMonth month = YearMonth.parse(aMonthStr);
+	    LocalDate start = month.atDay(1);
+	    LocalDate end = month.atEndOfMonth();
+	    // 1. Fetch category budgets
+	    List<Budget> categoryBudgets = 
+	    		budgetRepository.findByUserAndMonthAndCategoryIsNotNull(user, month);
+	    
+	    // 2. Fetch spent amounts grouped by Category
+	    Map<Long,BigDecimal> spentMap = new HashMap<>();
+	    for(Object[] row : transactionRepository.sumExpensesByCategory(user, start, end)) {
+	    	spentMap.put((Long)row[0], (BigDecimal)row[1]);
+	    }
+	    // 3. Build response
+	    List<CategoryBudgetSummaryResponseDto> response = categoryBudgets.stream()
+	    		.map(budget->{
+	    			BigDecimal spent = spentMap.getOrDefault(budget.getCategory().getId(), BigDecimal.ZERO);
+	    			BigDecimal remaining = budget.getAmount().subtract(spent);
+	    			return new CategoryBudgetSummaryResponseDto(
+	    					new CategoryResponseDto(budget.getCategory().getId(), budget.getCategory().getName(), budget.getCategory().getType()),
+	    					budget.getAmount(),
+	    					spent,
+	    					remaining,
+	    					remaining.compareTo(BigDecimal.ZERO)<0);
+	    		}).toList();
+	    return ResponseUtil.build(HttpStatus.OK, "Category budget summary fetched successfully",response);
+	    
 	}
 }

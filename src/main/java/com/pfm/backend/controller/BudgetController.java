@@ -46,4 +46,10 @@ public class BudgetController {
 		String email = aAuthentication.getName();
 		return budgetService.getBudgetSummary(email, month);
 	}
+	
+	@GetMapping("/summary/categories")
+	public ResponseEntity<?>getCategoryBudgetSummary(@RequestParam("month") String month,Authentication aAuthentication){
+		String email = aAuthentication.getName();
+		return budgetService.getCategoryBudgetSummary(email, month);
+	}
 }

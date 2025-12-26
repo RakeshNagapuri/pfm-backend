@@ -1,4 +1,4 @@
-package com.pfm.backend.dto;
+package com.pfm.backend.dto.response;
 
 import java.math.BigDecimal;
 
@@ -7,10 +7,10 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class BudgetSummaryResponseDto {
-	private String month;
+public class CategoryBudgetSummaryResponseDto {
+	private CategoryResponseDto category;
 	private BigDecimal budget;
 	private BigDecimal spent;
 	private BigDecimal remaining;
-	private boolean overBudget; 
+	private boolean overBudget;
 }
