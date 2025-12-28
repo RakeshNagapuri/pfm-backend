@@ -6,6 +6,7 @@ import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,9 @@ import com.pfm.backend.dto.BudgetUpdateRequestDto;
 import com.pfm.backend.dto.response.BudgetResponseDto;
 import com.pfm.backend.dto.response.BudgetSummaryResponseDto;
 import com.pfm.backend.dto.response.CategoryBudgetSummaryResponseDto;
+import com.pfm.backend.dto.response.CategoryOverBudgetDto;
 import com.pfm.backend.dto.response.CategoryResponseDto;
+import com.pfm.backend.dto.response.OverBudgetSummaryResponseDto;
 import com.pfm.backend.model.Budget;
 import com.pfm.backend.model.Category;
 import com.pfm.backend.model.User;
@@ -223,6 +226,90 @@ public class BudgetService {
 	    					remaining.compareTo(BigDecimal.ZERO)<0);
 	    		}).toList();
 	    return ResponseUtil.build(HttpStatus.OK, "Category budget summary fetched successfully",response);
+	    
+	}
+	
+	public ResponseEntity<?>getOverBudgetSummary(String aEmail,String aMonthStr){
+		User user = userRepository.findByEmail(aEmail).orElse(null);
+	    if (user == null) {
+	        return ResponseUtil.build(
+	                HttpStatus.UNAUTHORIZED,
+	                "User not found"
+	        );
+	    }
+	    
+	    YearMonth month = YearMonth.parse(aMonthStr);
+	    LocalDate start = month.atDay(1);
+	    LocalDate end = month.atEndOfMonth();
+	    
+	    // 1 Overall Budget
+	    Budget overallBudget = budgetRepository
+	            .findByUserAndMonthAndCategory(user, month, null)
+	            .orElse(null);
+
+	    BigDecimal totalSpent =
+	            transactionRepository.sumExpenseForPeriod(user, start, end);
+	    boolean overallOverBudget = false;
+	    BigDecimal overallExceeded = BigDecimal.ZERO;
+
+	    if (overallBudget != null) {
+	        BigDecimal remaining =
+	                overallBudget.getAmount().subtract(totalSpent);
+	        if (remaining.compareTo(BigDecimal.ZERO) < 0) {
+	            overallOverBudget = true;
+	            overallExceeded = remaining.abs();
+	        }
+	    }
+	    
+	    // Category-wise over-budget
+	    List<Budget> categoryBudgets =
+	            budgetRepository.findByUserAndMonthAndCategoryIsNotNull(user, month);
+
+	    Map<Long, BigDecimal> spentMap = new HashMap<>();
+	    for (Object[] row :
+	            transactionRepository.sumExpensesByCategory(user, start, end)) {
+	        spentMap.put((Long) row[0], (BigDecimal) row[1]);
+	    }
+
+	    List<CategoryOverBudgetDto> categoryOverBudgets =
+	            categoryBudgets.stream()
+	                    .map(budget -> {
+	                        BigDecimal spent =
+	                                spentMap.getOrDefault(
+	                                        budget.getCategory().getId(),
+	                                        BigDecimal.ZERO
+	                                );
+
+	                        BigDecimal remaining =
+	                                budget.getAmount().subtract(spent);
+
+	                        if (remaining.compareTo(BigDecimal.ZERO) < 0) {
+	                            return new CategoryOverBudgetDto(
+	                                    new CategoryResponseDto(
+	                                            budget.getCategory().getId(),
+	                                            budget.getCategory().getName(),
+	                                            budget.getCategory().getType()
+	                                    ),
+	                                    remaining.abs()
+	                            );
+	                        }
+	                        return null;
+	                    })
+	                    .filter(Objects::nonNull)
+	                    .toList();
+
+	    OverBudgetSummaryResponseDto response =
+	            new OverBudgetSummaryResponseDto(
+	                    overallOverBudget,
+	                    overallExceeded,
+	                    categoryOverBudgets
+	            );
+
+	    return ResponseUtil.build(
+	            HttpStatus.OK,
+	            "Over-budget summary fetched successfully",
+	            response
+	    );
 	    
 	}
 }
