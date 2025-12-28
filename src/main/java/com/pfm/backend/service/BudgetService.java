@@ -312,4 +312,37 @@ public class BudgetService {
 	    );
 	    
 	}
+	
+	public ResponseEntity<?>deleteBudget(Long aId,String aEmail){
+		User user = userRepository.findByEmail(aEmail).orElse(null);
+	    if (user == null) {
+	        return ResponseUtil.build(
+	                HttpStatus.UNAUTHORIZED,
+	                "User not found"
+	        );
+	    }
+	    
+	    Budget budget = budgetRepository.findById(aId).orElse(null);
+	    if (budget == null || !budget.getUser().getId().equals(user.getId())) {
+	        return ResponseUtil.build(
+	                HttpStatus.NOT_FOUND,
+	                "Budget not found"
+	        );
+	    }
+	    
+	    //Prevent deleting overall budget
+	    if (budget.getCategory() == null) {
+	        return ResponseUtil.build(
+	                HttpStatus.BAD_REQUEST,
+	                "Overall budget cannot be deleted. Update it instead."
+	        );
+	    }
+	    
+	    budgetRepository.delete(budget);
+	    return ResponseUtil.build(
+	            HttpStatus.OK,
+	            "Category budget deleted successfully"
+	    );
+	    
+	}
 }

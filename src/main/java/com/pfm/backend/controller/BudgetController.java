@@ -2,6 +2,7 @@ package com.pfm.backend.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,5 +57,10 @@ public class BudgetController {
 	@GetMapping("/summary/over-budget")
 	public ResponseEntity<?> getOverBudgetSummary(@RequestParam("month") String aMonth,Authentication aAuthentication) {
 	    return budgetService.getOverBudgetSummary(aAuthentication.getName(),aMonth);
+	}
+	
+	@DeleteMapping("{id}")
+	public ResponseEntity<?> deleteBudget(@PathVariable("id")Long aId,Authentication aAuthentication){
+		return budgetService.deleteBudget(aId, aAuthentication.getName());
 	}
 }
