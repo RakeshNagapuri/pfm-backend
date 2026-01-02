@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -184,5 +185,61 @@ public class BudgetServiceTest {
 		            BigDecimal.valueOf(1200),
 		            violation.getExceededAmount()
 		    );
+	}
+	/**
+	 * No overall budget present.
+	 *
+	 * Month: 2025-01
+	 * Overall Budget: null
+	 * Category Budgets: present
+	 *
+	 * Expected:
+	 * - overallOverBudget = false
+	 * - overallExceededAmount = 0
+	 * - No exception thrown
+	 */
+	@Test
+	public void shouldHandleMissingOverallBudgetGracefully() {
+		when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+		when(budgetRepository.findByUserAndMonthAndCategory(eq(user),eq(YearMonth.of(2025, 1)) , isNull())).thenReturn(Optional.empty());
+		when(transactionRepository.sumExpenseForPeriod(any(), any(), any())).thenReturn(BigDecimal.valueOf(5000));
+		
+		ResponseEntity<?>response=budgetService.getOverBudgetSummary(user.getEmail(), "2025-01");
+		ApiResponse apiResponse = (ApiResponse)response.getBody();
+		OverBudgetSummaryResponseDto data = (OverBudgetSummaryResponseDto)apiResponse.getData();
+		
+		assertFalse(data.isOverallOverBudget());
+		assertEquals(BigDecimal.ZERO, data.getOverallExceededAmount());
+	}
+	/**
+	 * No category exceeds its budget.
+	 *
+	 * Month: 2025-01
+	 * Category Budgets: within limits
+	 *
+	 * Expected:
+	 * - categoryOverBudgets list is empty
+	 */
+	@Test
+	public void shouldReturnEmptyListWhenNoCategoryIsOverBudget() {
+		Category food = new Category();
+		food.setId(1L);
+		food.setName("Food");
+		food.setType("EXPENSE");
+		
+		Budget foodBudget = new Budget();
+		foodBudget.setAmount(BigDecimal.valueOf(10000));
+		foodBudget.setCategory(food);
+		
+		when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+		when(budgetRepository.findByUserAndMonthAndCategoryIsNotNull(eq(user),eq(YearMonth.of(2025, 1)))).thenReturn(List.of(foodBudget));
+		List<Object[]>spent = new ArrayList<>();
+		spent.add(new Object[] {1L,BigDecimal.valueOf(6000)});
+		
+		when(transactionRepository.sumExpensesByCategory(any(), any(), any())).thenReturn(spent);
+		ResponseEntity<?>response = budgetService.getOverBudgetSummary(user.getEmail(), "2025-01");
+		ApiResponse apiResponse = (ApiResponse)response.getBody();
+		OverBudgetSummaryResponseDto data = (OverBudgetSummaryResponseDto)apiResponse.getData();
+		assertTrue(data.getCategoryOverBudgets().isEmpty());		
 	}
 }
