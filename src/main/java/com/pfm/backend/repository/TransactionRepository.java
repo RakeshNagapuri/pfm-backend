@@ -40,5 +40,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>{
 			GROUP BY t.category.id
 			""")
 	List<Object[]>sumExpensesByCategory(@Param("user")User aUser,@Param("start")LocalDate aStart,@Param("end")LocalDate aEnd);
-
+	
+	@Query("""
+		    SELECT COALESCE(SUM(t.amount), 0)
+		    FROM Transaction t
+		    WHERE t.user = :user
+		      AND t.type = :type
+		      AND t.transactionDate BETWEEN :start AND :end
+		""")
+	BigDecimal sumByTypeAndPeriod(
+	        @Param("user") User user,
+	        @Param("type") String type,
+	        @Param("start") LocalDate start,
+	        @Param("end") LocalDate end
+	);
 }
