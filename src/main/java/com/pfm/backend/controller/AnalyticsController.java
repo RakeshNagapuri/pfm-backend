@@ -21,4 +21,10 @@ public class AnalyticsController {
 	public ResponseEntity<?>getMonthlySummary(@RequestParam String month,Authentication aAuthentication){
 		return service.getMonthlySummary(aAuthentication.getName(), month);
 	}
+	
+	@GetMapping("/category-summary")
+	public ResponseEntity<?>getCategorySummary(@RequestParam String month,Authentication aAuthentication){
+		return service.getCategoryWiseExpenseSummary(aAuthentication.getName(), month);
+	}
+	
 }

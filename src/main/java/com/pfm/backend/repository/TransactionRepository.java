@@ -54,4 +54,19 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>{
 	        @Param("start") LocalDate start,
 	        @Param("end") LocalDate end
 	);
+	
+	@Query("""
+		    SELECT c.id, c.name, COALESCE(SUM(t.amount), 0)
+		    FROM Transaction t
+		    JOIN t.category c
+		    WHERE t.user = :user
+		      AND t.type = 'EXPENSE'
+		      AND t.transactionDate BETWEEN :start AND :end
+		    GROUP BY c.id, c.name
+		""")
+	List<Object[]> getCategoryWiseExpenseSummary(
+		        @Param("user") User user,
+		        @Param("start") LocalDate start,
+		        @Param("end") LocalDate end
+		);
 }
