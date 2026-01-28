@@ -16,6 +16,7 @@ import com.pfm.backend.dto.response.CategoryBudgetVsActualDto;
 import com.pfm.backend.dto.response.CategoryExpenseSummaryDto;
 import com.pfm.backend.dto.response.MonthlySummaryResponseDto;
 import com.pfm.backend.dto.response.MonthlyTrendDto;
+import com.pfm.backend.dto.response.OverallBudgetVsActualDto;
 import com.pfm.backend.model.Budget;
 import com.pfm.backend.model.User;
 import com.pfm.backend.repository.BudgetRepository;
@@ -144,4 +145,40 @@ public class AnalyticsService {
 	    return ResponseUtil.build(HttpStatus.OK, "Monthly trends fetched successfully",trends);
 	}
 	
+	
+	public ResponseEntity<?>getOverallBudgetVsActual(String aEmail,String aMonthStr){
+		User user = userRepository.findByEmail(aEmail).orElse(null);
+	    if (user == null) {
+	        return ResponseUtil.build(HttpStatus.UNAUTHORIZED, "User not found");
+	    }
+	    YearMonth month = YearMonth.parse(aMonthStr);
+	    LocalDate start = month.atDay(1);
+	    LocalDate end = month.atEndOfMonth();
+	    Budget overallBudget =
+	            budgetRepository
+	                    .findByUserAndMonthAndCategory(user, month, null)
+	                    .orElse(null);
+
+	    if (overallBudget == null) {
+	        return ResponseUtil.build(
+	                HttpStatus.NOT_FOUND,
+	                "Overall budget not found for this month"
+	        );
+	    }
+	    BigDecimal spent =
+	            transactionRepository
+	                    .sumExpenseForPeriod(user, start, end);
+
+	    BigDecimal remaining =
+	            overallBudget.getAmount().subtract(spent);
+	    
+	    
+		return ResponseUtil.build(HttpStatus.OK,"Overall budget vs actual fetched successfully",  new OverallBudgetVsActualDto(
+				aMonthStr,
+                overallBudget.getAmount(),
+                spent,
+                remaining,
+                remaining.compareTo(BigDecimal.ZERO) < 0
+        ));
+	}
 }

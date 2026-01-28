@@ -37,4 +37,9 @@ public class AnalyticsController {
 		return service.getMonthlyTrends(aAuthentication.getName(), months);
 	}
 	
+	@GetMapping("/overall-budget-vs-actual")
+	public ResponseEntity<?>getOverallBudgetVsActual(@RequestParam String month,Authentication aAuthentication){
+		return service.getOverallBudgetVsActual(aAuthentication.getName(), month);
+	}
+	
 }
