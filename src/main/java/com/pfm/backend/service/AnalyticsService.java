@@ -3,6 +3,7 @@ package com.pfm.backend.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import com.pfm.backend.dto.response.CategoryBudgetVsActualDto;
 import com.pfm.backend.dto.response.CategoryExpenseSummaryDto;
 import com.pfm.backend.dto.response.MonthlySummaryResponseDto;
+import com.pfm.backend.dto.response.MonthlyTrendDto;
 import com.pfm.backend.model.Budget;
 import com.pfm.backend.model.User;
 import com.pfm.backend.repository.BudgetRepository;
@@ -117,7 +119,29 @@ public class AnalyticsService {
 	    			remaining.compareTo(BigDecimal.ZERO)<0);
 	    	
 	    }).toList();
-	    return ResponseUtil.build(HttpStatus.OK, "Budget vs actual fetched successfully",response);
-	    
+	    return ResponseUtil.build(HttpStatus.OK, "Budget vs actual fetched successfully",response);    
 	}
+	
+	public ResponseEntity<?>getMonthlyTrends(String aEmail,int aMonths){
+		User user = userRepository.findByEmail(aEmail).orElse(null);
+	    if (user == null) {
+	        return ResponseUtil.build(HttpStatus.UNAUTHORIZED, "User not found");
+	    }
+	    List<MonthlyTrendDto> trends = new ArrayList<>();
+	    
+	    for(int i=aMonths-1;i>=0;i--) {
+	    	YearMonth ym = YearMonth.now().minusMonths(i);
+	    	LocalDate start = ym.atDay(1);
+	    	LocalDate end = ym.atEndOfMonth();
+	    	
+	    	BigDecimal income = transactionRepository.sumByTypeAndPeriod(user, "INCOME", start, end);
+	    	
+	    	BigDecimal expenses = transactionRepository.sumByTypeAndPeriod(user, "EXPENSE", start, end);
+	    	
+	    	trends.add(new MonthlyTrendDto(ym.toString(), income, expenses, income.subtract(expenses)));
+	    }
+	    
+	    return ResponseUtil.build(HttpStatus.OK, "Monthly trends fetched successfully",trends);
+	}
+	
 }

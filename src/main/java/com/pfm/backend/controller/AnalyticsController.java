@@ -32,4 +32,9 @@ public class AnalyticsController {
 		return service.getCategoryBudgetVsActual(aAuthentication.getName(), month);
 	}
 	
+	@GetMapping("/monthly-trends")
+	public ResponseEntity<?>getMonthlyTrends(@RequestParam(defaultValue="6")int months,Authentication aAuthentication){
+		return service.getMonthlyTrends(aAuthentication.getName(), months);
+	}
+	
 }
