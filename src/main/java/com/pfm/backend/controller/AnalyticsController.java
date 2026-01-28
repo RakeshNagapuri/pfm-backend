@@ -27,4 +27,9 @@ public class AnalyticsController {
 		return service.getCategoryWiseExpenseSummary(aAuthentication.getName(), month);
 	}
 	
+	@GetMapping("/budget-vs-actual")
+	public ResponseEntity<?>getBudgetVsActual(@RequestParam String month,Authentication aAuthentication){
+		return service.getCategoryBudgetVsActual(aAuthentication.getName(), month);
+	}
+	
 }
