@@ -36,10 +36,4 @@ public class User extends BaseEntity{
     @Builder.Default
     private String locale = "en_IN";
 
-    @CreationTimestamp
-    @Column(updatable = false)
-    private Instant createdAt;
-
-    @UpdateTimestamp
-    private Instant updatedAt;
 }
