@@ -2,6 +2,7 @@ package com.pfm.backend.service;
 
 import java.time.LocalDate;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,8 @@ public class TransactionService {
 	private final UserRepository userRepository;
 	private final CategoryRepository categoryRepository;
 	
+	
+	@CacheEvict(value = "monthlySummary", allEntries = true)
 	public ResponseEntity<?>createTransaction(TransactionRequestDto aTransactionRequestDto,String aEmail){
 		User user = userRepository.findByEmail(aEmail).orElse(null);
 		if(user==null) {

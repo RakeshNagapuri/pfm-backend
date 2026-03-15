@@ -1,5 +1,6 @@
 package com.pfm.backend.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,7 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pfm.backend.dto.response.MonthlySummaryResponseDto;
 import com.pfm.backend.service.AnalyticsService;
+import com.pfm.backend.util.ResponseUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +22,12 @@ public class AnalyticsController {
 	
 	@GetMapping("/monthly-summary")
 	public ResponseEntity<?>getMonthlySummary(@RequestParam String month,Authentication aAuthentication){
-		return service.getMonthlySummary(aAuthentication.getName(), month);
+		MonthlySummaryResponseDto monthlySummary = service.getMonthlySummary(aAuthentication.getName(), month);
+		return ResponseUtil.build(
+	            HttpStatus.OK,
+	            "Monthly summary fetched successfully",
+	            monthlySummary
+	    );
 	}
 	
 	@GetMapping("/category-summary")

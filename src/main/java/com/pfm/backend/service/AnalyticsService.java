@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -35,11 +36,11 @@ public class AnalyticsService {
 	private final UserRepository userRepository;
 
 	
-	
-	public ResponseEntity<?>getMonthlySummary(String aEmail,String aMonthStr){
+	@Cacheable(value = "monthlySummary", key = "#aEmail + '_' + #aMonthStr")
+	public MonthlySummaryResponseDto getMonthlySummary(String aEmail,String aMonthStr){
 		User user = userRepository.findByEmail(aEmail).orElse(null);
 		if(user==null) {
-			return ResponseUtil.build(HttpStatus.UNAUTHORIZED, "User not found");
+			throw new RuntimeException("User not found");
 		}
 		YearMonth month = YearMonth.parse(aMonthStr);
 		LocalDate start = month.atDay(1);
@@ -51,7 +52,7 @@ public class AnalyticsService {
 		
 		BigDecimal savings = income.subtract(expenses);
 		
-		return ResponseUtil.build(HttpStatus.OK, "Monthly summary fetched successfully",new MonthlySummaryResponseDto(aMonthStr,income,expenses,savings));
+		return new MonthlySummaryResponseDto(aMonthStr,income,expenses,savings);
 		
 	}
 	
