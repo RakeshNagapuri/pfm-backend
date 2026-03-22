@@ -63,3 +63,61 @@ This reduces response time and database load significantly.
 ##  API Endpoints (Sample)
 
 ### Authentication
+POST /api/auth/register
+POST /api/auth/login
+
+---
+
+###  Transactions
+POST /api/transactions
+GET /api/transactions
+PUT /api/transactions/{id}
+DELETE /api/transactions/{id}
+
+
+---
+
+###  Budget
+POST /api/budgets
+GET /api/budgets
+
+
+---
+
+### Analytics
+
+GET /api/analytics/monthly-summary?month=YYYY-MM
+GET /api/analytics/category-summary
+GET /api/analytics/monthly-trends
+GET /api/analytics/budget-vs-actual
+
+---
+
+## 🧠 Redis Caching Flow
+
+Client
+↓
+Spring Boot API
+↓
+Check Redis Cache
+↓
+┌───────────────┐
+│ Cache Hit │ → Return Response
+└───────────────┘
+↓
+┌───────────────┐
+│ Cache Miss │ → Query Database
+└───────────────┘
+↓
+Process Data
+↓
+Store in Redis
+↓
+Return Response
+
+
+
+
+
+
+
